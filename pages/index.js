@@ -19,10 +19,6 @@ export default function Home() {
             Scan the QR code on a passport page, pick the challenge you just did,
             attach a photo. Type your code in once — your phone remembers it.
           </li>
-          <li>
-            Claim at least two challenges in each of Types A, B, C and D to
-            qualify for the main prize. Bonus challenges add points on top.
-          </li>
         </ol>
       </div>
 
