@@ -1,0 +1,27 @@
+{
+  "name": "lost-on-the-beltline",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Old Fourth Ward scavenger hunt - registration, challenge submission, and live leaderboard.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "qr": "node scripts/generate-qr.js",
+    "test": "node --test tests/*.test.mjs",
+    "test:capacity": "./scripts/test-capacity.sh"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4",
+    "next": "^14.2.15",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "stripe": "^16.12.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^14.2.15",
+    "qrcode": "^1.5.4"
+  }
+}

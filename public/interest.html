@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lost on the BeltLine — Interest form</title>
+<style>
+  :root { --ink:#1c1a17; --ink-soft:#6b635a; --paper:#f7f3ec; --card:#fffdf8; --line:#e3dbcd; --rust:#b84a2f; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink);
+         font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; }
+  main { max-width:560px; margin:0 auto; padding:40px 20px 64px; }
+  .eyebrow { font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-soft); margin:0 0 8px; }
+  h1 { font-size:clamp(28px,6vw,38px); line-height:1.1; margin:0 0 12px; }
+  .lede { font-size:17px; color:var(--ink-soft); margin-top:0; line-height:1.6; }
+  form { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:22px; }
+  label { display:block; font-weight:600; font-size:14px; margin-bottom:6px; }
+  .field { margin-bottom:16px; }
+  input, select, textarea { width:100%; padding:12px 14px; font-size:16px; font-family:inherit;
+         color:var(--ink); background:#fff; border:1px solid var(--line); border-radius:10px; }
+  textarea { min-height:92px; resize:vertical; }
+  button { font:inherit; font-weight:600; width:100%; padding:14px 20px; border-radius:10px;
+           border:1px solid var(--ink); background:var(--ink); color:var(--paper); cursor:pointer; }
+  .muted { color:var(--ink-soft); font-size:14px; }
+  .hp { position:absolute; left:-9999px; }
+</style>
+</head>
+<body>
+<main>
+  <p class="eyebrow">Old Fourth Ward &middot; Atlanta</p>
+  <h1>Lost on the BeltLine</h1>
+  <p class="lede">
+    A two-person scavenger hunt through the Old Fourth Ward. Registration opens soon &mdash;
+    leave your email and we&rsquo;ll tell you the moment it does.
+  </p>
+
+  <!-- Netlify Forms: detected at build time from the data-netlify attribute.
+       No backend, no JavaScript, nothing to deploy alongside it. -->
+  <form name="hunt-interest" method="POST" data-netlify="true" netlify-honeypot="bot-field" action="/interest-thanks.html">
+    <input type="hidden" name="form-name" value="hunt-interest" />
+    <p class="hp"><label>Leave this empty: <input name="bot-field" /></label></p>
+
+    <div class="field">
+      <label for="name">Your name</label>
+      <input id="name" name="name" type="text" required />
+    </div>
+
+    <div class="field">
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" required />
+    </div>
+
+    <div class="field">
+      <label for="teammate">Who&rsquo;s your teammate? (optional)</label>
+      <input id="teammate" name="teammate" type="text" />
+    </div>
+
+    <div class="field">
+      <label for="heard">How&rsquo;d you hear about it?</label>
+      <select id="heard" name="heard">
+        <option value="">Pick one</option>
+        <option>A friend</option>
+        <option>Instagram</option>
+        <option>Saw it on the BeltLine</option>
+        <option>A partner business</option>
+        <option>Somewhere else</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="notes">Anything you want us to know? (optional)</label>
+      <textarea id="notes" name="notes"></textarea>
+    </div>
+
+    <button type="submit">Keep me posted</button>
+  </form>
+
+  <p class="muted">We&rsquo;ll only email you about this hunt. No list, no resale.</p>
+</main>
+</body>
+</html>

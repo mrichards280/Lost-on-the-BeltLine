@@ -1,0 +1,9 @@
+node_modules/
+.next/
+out/
+.env
+.env.local
+.netlify/
+public/qr/
+.DS_Store
+npm-debug.log*
