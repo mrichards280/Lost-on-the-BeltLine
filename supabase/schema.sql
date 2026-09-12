@@ -5,6 +5,11 @@
 -- Tables
 -- ---------------------------------------------------------------------------
 
+-- Payment is Venmo, which means it happens outside this system entirely: there
+-- is no webhook to tell us money arrived. So registration creates the team
+-- immediately as 'unpaid', and the organizer settles it by eye against their
+-- Venmo feed. amount_due_cents is frozen at registration so a later price
+-- change never rewrites what someone was actually asked to pay.
 create table if not exists teams (
   id uuid primary key default gen_random_uuid(),
   team_code text unique not null,
@@ -12,10 +17,20 @@ create table if not exists teams (
   member_1_name text not null,
   member_2_name text not null,
   email text not null,
-  stripe_payment_id text unique,
   merch_order jsonb,
+  amount_due_cents int not null default 5000,
+  payment_status text not null default 'unpaid'
+    check (payment_status in ('unpaid', 'paid')),
+  paid_at timestamptz,
+  payment_note text,
   created_at timestamptz default now()
 );
+
+-- One team per email address. Without a payment step there is nothing to slow
+-- down a double-tapped submit button, and every accidental duplicate burns one
+-- of only 90 team codes. Registration returns the existing code on conflict
+-- instead of erroring, so a double submit is harmless.
+create unique index if not exists teams_email_key on teams (lower(email));
 
 create table if not exists challenges (
   id serial primary key,

@@ -1,23 +1,69 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { isEligible } from '@/lib/eligibility';
+import { formatUsd } from '@/lib/pricing';
 
-// Staff view for the sticker-matching pass at the end of the day: every team,
-// what the database says they claimed, and the proof photo for each one, so a
-// passport's handwritten numbers can be checked against reality.
+const PASSCODE_KEY = 'beltline.hqPasscode';
+
+// Staff view. Two jobs: settling Venmo payments at check-in, and the
+// sticker-matching pass at the end — every team, what the database says they
+// claimed, and the proof photo for each one.
 //
-// Unauthenticated by design for a 15-team friends event — it is simply not
-// linked from anywhere public. See the README before pointing this at a bigger
+// Reading is unauthenticated by design for a 15-team friends event; it is
+// simply not linked from anywhere public. Marking a team paid is a write, so
+// it requires HQ_PASSCODE. See the README before pointing this at a bigger
 // event or a real email list.
 export default function HQ() {
   const [teams, setTeams] = useState(null);
+  const [payments, setPayments] = useState(null);
   const [error, setError] = useState(null);
+  const [passcode, setPasscode] = useState('');
+  const [busyCode, setBusyCode] = useState(null);
+  const [paymentError, setPaymentError] = useState(null);
 
   useEffect(() => {
-    fetch('/api/hq')
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('Could not load HQ data'))))
-      .then((data) => setTeams(data.teams))
-      .catch((err) => setError(err.message));
+    setPasscode(window.localStorage.getItem(PASSCODE_KEY) ?? '');
   }, []);
+
+  const load = useCallback(async () => {
+    try {
+      const response = await fetch('/api/hq');
+      if (!response.ok) throw new Error('Could not load HQ data');
+      const data = await response.json();
+      setTeams(data.teams);
+      setPayments(data.payments);
+    } catch (err) {
+      setError(err.message);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  async function togglePaid(team) {
+    setBusyCode(team.teamCode);
+    setPaymentError(null);
+
+    try {
+      const response = await fetch('/api/mark-paid', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-hq-passcode': passcode },
+        body: JSON.stringify({
+          teamCode: team.teamCode,
+          paid: team.paymentStatus !== 'paid',
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Could not update that team');
+
+      window.localStorage.setItem(PASSCODE_KEY, passcode);
+      await load();
+    } catch (err) {
+      setPaymentError(err.message);
+    } finally {
+      setBusyCode(null);
+    }
+  }
 
   if (error) return <main className="wrap"><div className="notice bad">{error}</div></main>;
   if (!teams) return <main className="wrap"><p className="muted">Loading...</p></main>;
@@ -31,12 +77,48 @@ export default function HQ() {
         {teams.reduce((sum, team) => sum + team.claims.length, 0)} claims recorded
       </p>
 
+      <div className="card">
+        <h2 style={{ marginTop: 0 }}>Venmo</h2>
+        {payments && (
+          <p>
+            <strong>{formatUsd(payments.collectedCents)}</strong> in &middot;{' '}
+            <strong>{formatUsd(payments.outstandingCents)}</strong> outstanding across{' '}
+            {payments.unpaidCount} team{payments.unpaidCount === 1 ? '' : 's'}
+          </p>
+        )}
+        <div className="field" style={{ marginBottom: 0 }}>
+          <label htmlFor="passcode">HQ passcode</label>
+          <input
+            id="passcode"
+            type="password"
+            autoComplete="off"
+            value={passcode}
+            onChange={(e) => setPasscode(e.target.value)}
+            placeholder="Required to mark teams paid"
+          />
+          <p className="muted" style={{ margin: '6px 0 0' }}>
+            Matches <code>HQ_PASSCODE</code> on the server. Remembered on this device after
+            the first successful update.
+          </p>
+        </div>
+        {paymentError && (
+          <div className="notice bad" style={{ marginTop: 14, marginBottom: 0 }}>
+            {paymentError}
+          </div>
+        )}
+      </div>
+
       {teams.map((team) => {
         const counts = countByCategory(team.claims);
+        const paid = team.paymentStatus === 'paid';
+
         return (
           <div className="card" key={team.teamId}>
             <h2 style={{ marginTop: 0, marginBottom: 4 }}>
-              {team.teamCode} &mdash; {team.teamName}
+              {team.teamCode} &mdash; {team.teamName}{' '}
+              <span className={`pill ${paid ? 'A' : 'B'}`}>
+                {paid ? 'paid' : `owes ${formatUsd(team.amountDueCents)}`}
+              </span>
             </h2>
             <p className="muted" style={{ marginTop: 0 }}>
               {team.members.join(' and ')} &middot; {team.email}
@@ -46,6 +128,25 @@ export default function HQ() {
                   {team.merch.map((m) => (m.size ? `${m.item} (${m.size})` : m.item)).join(', ')}
                 </>
               )}
+              {paid && team.paidAt && (
+                <> &middot; paid {new Date(team.paidAt).toLocaleString()}</>
+              )}
+            </p>
+
+            <p>
+              <button
+                type="button"
+                className="secondary"
+                style={{ width: 'auto' }}
+                disabled={busyCode === team.teamCode}
+                onClick={() => togglePaid(team)}
+              >
+                {busyCode === team.teamCode
+                  ? 'Saving...'
+                  : paid
+                    ? 'Mark unpaid'
+                    : `Mark ${formatUsd(team.amountDueCents)} received`}
+              </button>
             </p>
 
             <p>

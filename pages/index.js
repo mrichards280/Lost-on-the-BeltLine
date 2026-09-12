@@ -13,7 +13,7 @@ export default function Home() {
       <div className="card">
         <h2 style={{ marginTop: 0 }}>How it works</h2>
         <ol style={{ lineHeight: 1.7, paddingLeft: 20, margin: 0 }}>
-          <li>Register as a team of two. You get a team code by email.</li>
+          <li>Register as a team of two, then Venmo the entry fee. You get a team code by email.</li>
           <li>Pick up your passport at the start line.</li>
           <li>
             Scan the QR code on a passport page, pick the challenge you just did,
@@ -32,7 +32,7 @@ export default function Home() {
           first to claim it. Move accordingly.
         </p>
         <Link href="/register" style={{ textDecoration: 'none' }}>
-          <button>Register a team &mdash; $50</button>
+          <button>Register a team &mdash; $50 by Venmo</button>
         </Link>
       </div>
 

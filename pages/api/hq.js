@@ -10,7 +10,10 @@ export default async function handler(req, res) {
     await Promise.all([
       supabaseAdmin
         .from('teams')
-        .select('id, team_code, team_name, member_1_name, member_2_name, email, merch_order')
+        .select(
+          'id, team_code, team_name, member_1_name, member_2_name, email, merch_order, ' +
+            'amount_due_cents, payment_status, paid_at, payment_note'
+        )
         .order('team_code'),
       supabaseAdmin
         .from('claims')
@@ -37,6 +40,10 @@ export default async function handler(req, res) {
         members: [t.member_1_name, t.member_2_name],
         email: t.email,
         merch: (merch ?? []).filter((m) => m.team_id === t.id),
+        amountDueCents: t.amount_due_cents,
+        paymentStatus: t.payment_status,
+        paidAt: t.paid_at,
+        paymentNote: t.payment_note,
         claims: [],
         score: 0,
       },
@@ -57,7 +64,22 @@ export default async function handler(req, res) {
     entry.score += claim.challenges?.points ?? 0;
   }
 
-  return res.status(200).json({ teams: [...byTeam.values()] });
+  const all = [...byTeam.values()];
+
+  // Venmo money lands outside this system, so the outstanding total is the
+  // number the organizer actually needs at check-in.
+  const unpaid = all.filter((team) => team.paymentStatus !== 'paid');
+
+  return res.status(200).json({
+    teams: all,
+    payments: {
+      unpaidCount: unpaid.length,
+      outstandingCents: unpaid.reduce((sum, team) => sum + (team.amountDueCents ?? 0), 0),
+      collectedCents: all
+        .filter((team) => team.paymentStatus === 'paid')
+        .reduce((sum, team) => sum + (team.amountDueCents ?? 0), 0),
+    },
+  });
 }
 
 async function signPhotoUrls(paths) {
