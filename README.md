@@ -54,6 +54,43 @@ SITE_URL=https://your-site.com npm run qr   # writes public/qr/*.png and *.svg
 
 ---
 
+## Design system
+
+Modern passport, femme, pastel ATL, glass, college party.
+
+The hinge: **a real passport data page is already a glass object** — laminated,
+holographic, printed with mono data fields and a machine-readable strip. So the
+"passport" and "glass" halves of the brief are the same material, and the pastel
+Atlanta sunset is what's shining through it.
+
+| | |
+| --- | --- |
+| **Ground** | Peach `#ffd0bd` · blush `#ffc0dc` · lavender `#d8ccff` · mint `#c9f0e0`, as four radial glows |
+| **Ink** | Deep plum `#2b1b3d`, never black |
+| **Pop** | `#e0457b` — the one loud thing, on primary buttons only |
+| **Display** | Syne 800 |
+| **UI / body** | Outfit |
+| **Data** | DM Mono |
+
+Two rules keep it coherent, and both are worth preserving if you extend it:
+
+- **Mono means data.** A number, a code, or a field label is DM Mono. That single
+  rule is what makes it read as a document rather than a pretty gradient.
+- **The hologram is rationed.** Only three things shimmer — the seal, the team
+  code, and Golden Ticket chips. Everything genuinely scarce, nothing decorative.
+
+Everything is token-driven in `styles/globals.css`, with a full dark palette
+(plum, magenta, teal — the party after dark) that follows the phone's own
+setting. `public/interest.html` and `public/interest-thanks.html` are standalone
+by necessity — Netlify Forms detects them at build time with no framework — so
+they carry a copy of the tokens. **Keep the two in step when either moves.**
+
+The gradient is painted on a fixed pseudo-element rather than with
+`background-attachment: fixed`, which iOS Safari mishandles. This site lives on
+phones.
+
+---
+
 ## Payment: how Venmo changes the shape of this
 
 With a payment processor, the webhook is what creates a team — money landing is

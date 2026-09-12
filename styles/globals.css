@@ -1,13 +1,135 @@
+/* ===========================================================================
+   Lost on the BeltLine — design system
+
+   Modern passport, femme, pastel ATL, glass, college party.
+
+   The hinge: a real passport data page is already a glass object — laminated,
+   holographic, printed with mono data fields and a machine-readable strip.
+   So the "passport" and "glass" halves of the brief are the same material,
+   and the pastel ATL sunset is what's shining through it.
+
+   Light  = Atlanta sunset (peach, blush, lavender, mint)
+   Dark   = the party after dark (plum, magenta, teal glow)
+   =========================================================================== */
+
 :root {
-  --ink: #1c1a17;
-  --ink-soft: #6b635a;
-  --paper: #f7f3ec;
-  --card: #fffdf8;
-  --line: #e3dbcd;
-  --rust: #b84a2f;
-  --moss: #3f6b44;
-  --gold: #c8952b;
-  --radius: 14px;
+  /* --- ground: the sunset behind the glass --- */
+  --ground: #fff4f7;
+  --glow-1: #ffd0bd;   /* peach — Atlanta */
+  --glow-2: #ffc0dc;   /* blush */
+  --glow-3: #c9f0e0;   /* mint */
+  --glow-4: #d8ccff;   /* lavender */
+
+  /* --- ink --- */
+  --ink: #2b1b3d;      /* deep plum, not black */
+  --ink-soft: #6d5b80;
+  --ink-faint: #9b8bab;
+
+  /* --- glass --- */
+  --glass: rgba(255, 255, 255, 0.58);
+  --glass-strong: rgba(255, 255, 255, 0.78);
+  --glass-edge: rgba(255, 255, 255, 0.9);
+  --glass-shadow: 0 18px 40px -22px rgba(74, 38, 92, 0.55);
+  --blur: 18px;
+
+  /* --- accents --- */
+  --pop: #e0457b;      /* the one loud thing */
+  --pop-ink: #ffffff;
+  --pop-soft: rgba(224, 69, 123, 0.12);
+  --good: #12916c;
+  --good-bg: rgba(139, 233, 201, 0.32);
+  --warn: #b26a00;
+  --warn-bg: rgba(255, 208, 140, 0.36);
+  --bad: #c2384f;
+  --bad-bg: rgba(255, 176, 190, 0.34);
+
+  /* --- category chips (A/B/C/D/bonus) --- */
+  --cat-a-bg: rgba(150, 231, 200, 0.5);  --cat-a-ink: #0d6b50;
+  --cat-b-bg: rgba(255, 190, 165, 0.55); --cat-b-ink: #9c4420;
+  --cat-c-bg: rgba(171, 213, 245, 0.55); --cat-c-ink: #1f5480;
+  --cat-d-bg: rgba(211, 193, 255, 0.55); --cat-d-ink: #553a9c;
+
+  --line: rgba(120, 86, 145, 0.16);
+  --radius: 20px;
+  --radius-sm: 12px;
+
+  --font-display: Syne, ui-sans-serif, system-ui, sans-serif;
+  --font-body: Outfit, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-data: 'DM Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --ground: #120a1b;
+    --glow-1: #4a1f56;
+    --glow-2: #6d1f48;
+    --glow-3: #0d4a52;
+    --glow-4: #2d1f66;
+
+    --ink: #f6edff;
+    --ink-soft: #bcaad0;
+    --ink-faint: #8a7a9e;
+
+    --glass: rgba(255, 255, 255, 0.07);
+    --glass-strong: rgba(255, 255, 255, 0.12);
+    --glass-edge: rgba(255, 255, 255, 0.16);
+    --glass-shadow: 0 18px 44px -20px rgba(0, 0, 0, 0.8);
+
+    --pop: #ff6fa5;
+    --pop-ink: #2b0f1d;
+    --pop-soft: rgba(255, 111, 165, 0.16);
+    --good: #6fe3bb;
+    --good-bg: rgba(23, 122, 95, 0.34);
+    --warn: #ffc978;
+    --warn-bg: rgba(140, 92, 16, 0.36);
+    --bad: #ff9bad;
+    --bad-bg: rgba(140, 38, 58, 0.36);
+
+    --cat-a-bg: rgba(23, 122, 95, 0.42);  --cat-a-ink: #a8f2d6;
+    --cat-b-bg: rgba(150, 66, 34, 0.42);  --cat-b-ink: #ffcbb4;
+    --cat-c-bg: rgba(32, 84, 128, 0.42);  --cat-c-ink: #bfe1fb;
+    --cat-d-bg: rgba(85, 58, 156, 0.42);  --cat-d-ink: #ddd0ff;
+
+    --line: rgba(255, 255, 255, 0.12);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --ground: #120a1b;
+  --glow-1: #4a1f56;
+  --glow-2: #6d1f48;
+  --glow-3: #0d4a52;
+  --glow-4: #2d1f66;
+
+  --ink: #f6edff;
+  --ink-soft: #bcaad0;
+  --ink-faint: #8a7a9e;
+
+  --glass: rgba(255, 255, 255, 0.07);
+  --glass-strong: rgba(255, 255, 255, 0.12);
+  --glass-edge: rgba(255, 255, 255, 0.16);
+  --glass-shadow: 0 18px 44px -20px rgba(0, 0, 0, 0.8);
+
+  --pop: #ff6fa5;
+  --pop-ink: #2b0f1d;
+  --pop-soft: rgba(255, 111, 165, 0.16);
+  --good: #6fe3bb;
+  --good-bg: rgba(23, 122, 95, 0.34);
+  --warn: #ffc978;
+  --warn-bg: rgba(140, 92, 16, 0.36);
+  --bad: #ff9bad;
+  --bad-bg: rgba(140, 38, 58, 0.36);
+
+  --cat-a-bg: rgba(23, 122, 95, 0.42);  --cat-a-ink: #a8f2d6;
+  --cat-b-bg: rgba(150, 66, 34, 0.42);  --cat-b-ink: #ffcbb4;
+  --cat-c-bg: rgba(32, 84, 128, 0.42);  --cat-c-ink: #bfe1fb;
+  --cat-d-bg: rgba(85, 58, 156, 0.42);  --cat-d-ink: #ddd0ff;
+
+  --line: rgba(255, 255, 255, 0.12);
+  color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -15,115 +137,302 @@
 html, body {
   margin: 0;
   padding: 0;
-  background: var(--paper);
   color: var(--ink);
-  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
   -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
 }
 
-a { color: var(--rust); }
+/* The sunset, painted on a fixed layer behind everything.
+   Deliberately NOT `background-attachment: fixed` on body — iOS Safari
+   mishandles that, and this site lives on phones. A fixed pseudo-element
+   pins the gradient reliably and still sits behind the cards' backdrop-filter. */
+html { background-color: var(--ground); }
+
+body { min-height: 100vh; }
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-color: var(--ground);
+  background-image:
+    radial-gradient(at 8% 4%, var(--glow-1) 0px, transparent 52%),
+    radial-gradient(at 92% 10%, var(--glow-2) 0px, transparent 48%),
+    radial-gradient(at 72% 88%, var(--glow-3) 0px, transparent 50%),
+    radial-gradient(at 14% 78%, var(--glow-4) 0px, transparent 48%);
+}
+
+a { color: var(--pop); text-underline-offset: 3px; }
 
 .wrap {
-  max-width: 680px;
+  max-width: 640px;
   margin: 0 auto;
-  padding: 32px 20px 64px;
+  padding-inline: 18px;
+  padding-block: 34px 72px;
 }
+
+/* ---------- type ---------- */
 
 .eyebrow {
-  font-size: 12px;
-  letter-spacing: 0.16em;
+  font-family: var(--font-data);
+  font-size: 11px;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--ink-soft);
-  margin: 0 0 8px;
+  margin: 0 0 10px;
 }
 
-h1 { font-size: clamp(28px, 6vw, 40px); line-height: 1.1; margin: 0 0 12px; }
-h2 { font-size: 20px; margin: 32px 0 12px; }
-p  { line-height: 1.6; }
-.lede { font-size: 17px; color: var(--ink-soft); margin-top: 0; }
+h1 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(30px, 8vw, 46px);
+  line-height: 0.98;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+  margin: 0 0 12px;
+}
+
+h2 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: -0.018em;
+  margin: 30px 0 12px;
+}
+
+p { line-height: 1.62; }
+
+.lede {
+  font-size: 17px;
+  color: var(--ink-soft);
+  margin-top: 0;
+}
+
+.muted { color: var(--ink-soft); font-size: 14px; }
+
+/* ---------- glass ---------- */
 
 .card {
-  background: var(--card);
-  border: 1px solid var(--line);
+  position: relative;
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(var(--blur)) saturate(140%);
+  backdrop-filter: blur(var(--blur)) saturate(140%);
+  border: 1px solid var(--glass-edge);
   border-radius: var(--radius);
-  padding: 20px;
+  box-shadow: var(--glass-shadow);
+  padding: 22px;
   margin-bottom: 14px;
+  overflow: hidden;
 }
 
-label { display: block; font-weight: 600; font-size: 14px; margin-bottom: 6px; }
-.field { margin-bottom: 16px; }
+/* The laminate: a passport's data page catches light across one corner. */
+.card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    128deg,
+    rgba(255, 255, 255, 0.5) 0%,
+    rgba(255, 255, 255, 0) 42%
+  );
+  mix-blend-mode: overlay;
+}
+
+/* ---------- form ---------- */
+
+label {
+  display: block;
+  font-family: var(--font-data);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin-bottom: 7px;
+}
+
+.field { margin-bottom: 18px; }
 
 input[type='text'],
 input[type='email'],
-select {
+input[type='password'],
+select,
+textarea {
   width: 100%;
-  padding: 12px 14px;
+  padding: 13px 15px;
   font-size: 16px; /* 16px stops iOS zooming the page on focus */
   font-family: inherit;
   color: var(--ink);
-  background: #fff;
-  border: 1px solid var(--line);
-  border-radius: 10px;
+  background: var(--glass-strong);
+  border: 1px solid var(--glass-edge);
+  border-radius: var(--radius-sm);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-input:focus, select:focus, button:focus-visible {
-  outline: 2px solid var(--rust);
-  outline-offset: 1px;
+textarea { min-height: 96px; resize: vertical; }
+
+input::placeholder, textarea::placeholder { color: var(--ink-faint); }
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--pop);
+  box-shadow: 0 0 0 3px var(--pop-soft);
 }
 
-.checkline { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-.checkline label { margin: 0; font-weight: 500; }
-.checkline input { width: 20px; height: 20px; accent-color: var(--rust); }
+button:focus-visible, a:focus-visible {
+  outline: 2px solid var(--pop);
+  outline-offset: 2px;
+}
+
+.checkline {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin-bottom: 12px;
+}
+.checkline label {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 15px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink);
+}
+.checkline input {
+  width: 21px;
+  height: 21px;
+  flex: none;
+  accent-color: var(--pop);
+}
+
+/* ---------- buttons ---------- */
 
 button {
-  font: inherit;
+  font-family: var(--font-body);
+  font-size: 15px;
   font-weight: 600;
-  padding: 14px 20px;
-  border-radius: 10px;
-  border: 1px solid var(--ink);
-  background: var(--ink);
-  color: var(--paper);
+  padding: 15px 22px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: var(--pop);
+  color: var(--pop-ink);
   cursor: pointer;
   width: 100%;
+  transition: transform 0.12s ease, filter 0.15s ease;
 }
-button:disabled { opacity: 0.55; cursor: not-allowed; }
-button.secondary { background: transparent; color: var(--ink); }
+button:hover:not(:disabled) { filter: brightness(1.06); transform: translateY(-1px); }
+button:active:not(:disabled) { transform: translateY(0); }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+button.secondary {
+  background: var(--glass-strong);
+  color: var(--ink);
+  border-color: var(--glass-edge);
+}
+
 button.link {
-  width: auto; background: none; border: none; padding: 0;
-  color: var(--rust); text-decoration: underline; font-weight: 500;
+  width: auto;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--pop);
+  text-decoration: underline;
+  font-weight: 500;
 }
+button.link:hover { transform: none; }
+
+/* ---------- chips ---------- */
 
 .pill {
   display: inline-block;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  padding: 3px 9px;
+  font-family: var(--font-data);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 10px;
   border-radius: 999px;
-  background: var(--line);
+  background: var(--glass-strong);
+  border: 1px solid var(--glass-edge);
   color: var(--ink-soft);
+  vertical-align: middle;
 }
-.pill.A { background: #dfe9db; color: #35502f; }
-.pill.B { background: #f3e0d6; color: #8c3d22; }
-.pill.C { background: #dde5ef; color: #2f4a66; }
-.pill.D { background: #efe3c8; color: #7a5a14; }
-.pill.bonus { background: var(--gold); color: #3a2a05; }
+.pill.A { background: var(--cat-a-bg); color: var(--cat-a-ink); border-color: transparent; }
+.pill.B { background: var(--cat-b-bg); color: var(--cat-b-ink); border-color: transparent; }
+.pill.C { background: var(--cat-c-bg); color: var(--cat-c-ink); border-color: transparent; }
+.pill.D { background: var(--cat-d-bg); color: var(--cat-d-ink); border-color: transparent; }
 
-.notice { border-radius: 10px; padding: 14px 16px; margin-bottom: 14px; line-height: 1.5; }
-.notice.good { background: #e4efe0; border: 1px solid #b9d3ae; }
-.notice.warn { background: #f7e9d4; border: 1px solid #e2c68d; }
-.notice.bad  { background: #f7dfd8; border: 1px solid #e0b1a2; }
+/* Bonus is the hologram — the one genuinely iridescent thing on the page. */
+.pill.bonus {
+  background: linear-gradient(100deg, #ffd0bd, #ffc0dc, #d8ccff, #c9f0e0, #ffd0bd);
+  background-size: 260% 100%;
+  color: #35204a;
+  border-color: transparent;
+  animation: shimmer 7s linear infinite;
+}
+
+@keyframes shimmer {
+  to { background-position: 260% 0; }
+}
+
+/* ---------- notices ---------- */
+
+.notice {
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  line-height: 1.5;
+  font-size: 14.5px;
+  border: 1px solid var(--glass-edge);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+.notice.good { background: var(--good-bg); color: var(--good); }
+.notice.warn { background: var(--warn-bg); color: var(--warn); }
+.notice.bad  { background: var(--bad-bg);  color: var(--bad); }
+.notice strong { color: inherit; }
+
+/* ---------- the team code: a passport document number ---------- */
 
 .teamcode {
-  font-size: 34px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  position: relative;
+  font-family: var(--font-data);
+  font-size: clamp(30px, 9vw, 40px);
+  font-weight: 500;
+  letter-spacing: 0.1em;
   text-align: center;
-  padding: 20px;
-  background: var(--paper);
-  border: 2px solid var(--ink);
-  border-radius: var(--radius);
+  padding: 24px 16px;
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  background:
+    linear-gradient(var(--glass-strong), var(--glass-strong)),
+    linear-gradient(100deg, #ffd0bd, #ffc0dc, #d8ccff, #c9f0e0, #ffd0bd);
+  background-size: 100% 100%, 260% 100%;
+  border: 1px solid var(--glass-edge);
+  animation: shimmer 9s linear infinite;
+  overflow: hidden;
 }
+
+/* ---------- machine-readable zone ---------- */
+
+.mrz {
+  font-family: var(--font-data);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+  word-break: break-all;
+  line-height: 1.7;
+  border-top: 1px dashed var(--line);
+  padding-top: 12px;
+  margin-top: 18px;
+  text-transform: uppercase;
+}
+
+/* ---------- challenge picker ---------- */
 
 .choice {
   display: flex;
@@ -131,27 +440,111 @@ button.link {
   gap: 12px;
   width: 100%;
   text-align: left;
-  background: var(--card);
+  background: var(--glass-strong);
   color: var(--ink);
-  border: 1px solid var(--line);
+  border: 1px solid var(--glass-edge);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
   font-weight: 500;
+  font-size: 14.5px;
   margin-bottom: 8px;
-  padding: 14px 16px;
+  padding: 13px 15px;
 }
-.choice[aria-pressed='true'] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.choice:hover:not(:disabled) { transform: none; filter: none; border-color: var(--pop); }
+.choice[aria-pressed='true'] {
+  border-color: var(--pop);
+  box-shadow: 0 0 0 2px var(--pop-soft);
+}
 .choice .grow { flex: 1; }
-.choice .pts { font-variant-numeric: tabular-nums; color: var(--ink-soft); font-size: 14px; }
-.choice.done { opacity: 0.5; }
+.choice .pts {
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+.choice.done { opacity: 0.42; }
 
-table { width: 100%; border-collapse: collapse; font-size: 15px; }
-th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); }
-th { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-soft); }
+/* ---------- tables ---------- */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+th, td {
+  text-align: left;
+  padding: 11px 8px;
+  border-bottom: 1px solid var(--line);
+}
+th {
+  font-family: var(--font-data);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink-soft);
+  font-weight: 400;
+}
 td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+td.num { font-family: var(--font-data); }
+tbody tr:last-child td { border-bottom: none; }
 
-.muted { color: var(--ink-soft); font-size: 14px; }
-.row-eligible td:first-child { border-left: 3px solid var(--moss); }
-.thumbs { display: flex; flex-wrap: wrap; gap: 8px; }
-.thumbs img { width: 88px; height: 88px; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); }
-.live { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-soft); }
-.live .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--moss); }
-.live.off .dot { background: var(--ink-soft); }
+.row-eligible td:first-child {
+  border-left: 3px solid var(--good);
+  padding-left: 9px;
+  border-radius: 2px 0 0 2px;
+}
+
+/* ---------- misc ---------- */
+
+.thumbs { display: flex; flex-wrap: wrap; gap: 9px; }
+.thumbs img {
+  width: 88px;
+  height: 88px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--glass-edge);
+}
+
+.live {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-data);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.live .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--good);
+  box-shadow: 0 0 0 0 var(--good);
+  animation: pulse 2.4s ease-out infinite;
+}
+.live.off .dot { background: var(--ink-faint); animation: none; }
+
+@keyframes pulse {
+  0%   { box-shadow: 0 0 0 0 var(--good-bg); }
+  70%  { box-shadow: 0 0 0 8px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+code {
+  font-family: var(--font-data);
+  font-size: 0.88em;
+  background: var(--glass-strong);
+  border: 1px solid var(--glass-edge);
+  border-radius: 5px;
+  padding: 1px 5px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
