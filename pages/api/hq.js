@@ -19,8 +19,16 @@ export default async function handler(req, res) {
         .from('claims')
         .select('team_id, challenge_id, photo_url, claimed_at, challenges(name, category, points)')
         .order('claimed_at'),
-      supabaseAdmin.from('merch_line_items').select('team_id, item, size'),
+      supabaseAdmin.from('merch_line_items').select('team_id, item, size, person_name'),
     ]);
+
+  // Someone signed up and their teammate never finished. There is no team and
+  // no money owed, so nothing else in this view would ever show it.
+  const { data: openInvites } = await supabaseAdmin
+    .from('pending_registrations')
+    .select('team_name, member_1_name, member_1_email, member_2_email, created_at')
+    .is('completed_at', null)
+    .order('created_at');
 
   if (teamsError) {
     console.error('HQ load failed', teamsError);
@@ -72,6 +80,7 @@ export default async function handler(req, res) {
 
   return res.status(200).json({
     teams: all,
+    openInvites: openInvites ?? [],
     payments: {
       unpaidCount: unpaid.length,
       outstandingCents: unpaid.reduce((sum, team) => sum + (team.amountDueCents ?? 0), 0),

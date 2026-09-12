@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
-import { CATEGORIES, describeGaps, isEligible } from '@/lib/eligibility';
 
 const STORAGE_KEY = 'beltline.teamCode';
 
@@ -63,9 +62,10 @@ export default function Leaderboard() {
       </p>
 
       {myTeam && (
-        <div className={`notice ${isEligible(myTeam.standing) ? 'good' : 'warn'}`}>
-          <strong>{myTeam.team.teamName}</strong> &mdash; {myTeam.standing.score} pts.{' '}
-          {describeGaps(myTeam.standing)}
+        <div className="notice good">
+          <strong>{myTeam.team.teamName}</strong> &mdash; {myTeam.standing.score} pts from{' '}
+          {myTeam.standing.claim_count} challenge
+          {myTeam.standing.claim_count === 1 ? '' : 's'}.
         </div>
       )}
 
@@ -74,31 +74,15 @@ export default function Leaderboard() {
           <thead>
             <tr>
               <th>Team</th>
-              {CATEGORIES.map((category) => (
-                <th key={category} className="num">
-                  {category}
-                </th>
-              ))}
+              <th className="num">Claims</th>
               <th className="num">Score</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((row) => (
-              <tr
-                key={row.team_id}
-                className={isEligible(row) ? 'row-eligible' : undefined}
-              >
-                <td>
-                  {row.team_name}
-                  {isEligible(row) && (
-                    <span className="muted"> &middot; qualified</span>
-                  )}
-                </td>
-                {CATEGORIES.map((category) => (
-                  <td key={category} className="num">
-                    {row[`${category.toLowerCase()}_count`]}
-                  </td>
-                ))}
+              <tr key={row.team_id}>
+                <td>{row.team_name}</td>
+                <td className="num">{row.claim_count}</td>
                 <td className="num">
                   <strong>{row.score}</strong>
                 </td>
@@ -106,7 +90,7 @@ export default function Leaderboard() {
             ))}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={CATEGORIES.length + 2} className="muted">
+                <td colSpan={3} className="muted">
                   No claims yet. Somebody go first.
                 </td>
               </tr>
@@ -116,8 +100,8 @@ export default function Leaderboard() {
       </div>
 
       <p className="muted">
-        Qualifying for the main prize takes at least two claims in each of A, B, C and D.
-        Bonus points count toward score, not toward qualifying.
+        Highest score wins. Play it however you like &mdash; chase the big-ticket stops or
+        rack up the easy ones.
       </p>
       <p className="muted">
         <Link href="/">Front page</Link>

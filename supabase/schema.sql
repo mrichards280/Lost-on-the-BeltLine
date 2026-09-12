@@ -17,6 +17,7 @@ create table if not exists teams (
   member_1_name text not null,
   member_2_name text not null,
   email text not null,
+  member_2_email text,
   merch_order jsonb,
   amount_due_cents int not null default 5000,
   payment_status text not null default 'unpaid'
@@ -31,6 +32,31 @@ create table if not exists teams (
 -- of only 90 team codes. Registration returns the existing code on conflict
 -- instead of erroring, so a double submit is harmless.
 create unique index if not exists teams_email_key on teams (lower(email));
+
+-- One person can start a registration and send the rest to their teammate.
+-- Nothing exists as a team until the teammate finishes it, so a half-filled
+-- sign-up never becomes a team that owes money or holds a team code.
+--
+-- The token is a capability URL: whoever holds the link can complete this
+-- registration, which is the point — the teammate has no account to log into.
+create table if not exists pending_registrations (
+  id uuid primary key default gen_random_uuid(),
+  token text unique not null,
+  team_name text not null,
+  member_1_name text not null,
+  member_1_email text not null,
+  member_2_email text not null,
+  member_1_merch jsonb,
+  team_id uuid references teams(id),
+  completed_at timestamptz,
+  created_at timestamptz default now()
+);
+
+-- One live invite per person. A completed one stops blocking, so someone whose
+-- teammate flaked can start again.
+create unique index if not exists pending_registrations_open_email_key
+  on pending_registrations (lower(member_1_email))
+  where completed_at is null;
 
 create table if not exists challenges (
   id serial primary key,
@@ -49,11 +75,15 @@ create table if not exists claims (
   primary key (challenge_id, team_id)
 );
 
+-- Merch is per person, not per team: both halves of a team can order, and a
+-- shirt needs its wearer's size. person_name is what the check-in table reads
+-- off, so a two-shirt team is not a guess.
 create table if not exists merch_line_items (
   id uuid primary key default gen_random_uuid(),
   team_id uuid references teams(id) not null,
   item text not null check (item in ('shirt','hat')),
   size text,
+  person_name text,
   created_at timestamptz default now()
 );
 
@@ -113,8 +143,9 @@ for each row execute function enforce_claim_cap();
 -- Leaderboard
 -- ---------------------------------------------------------------------------
 --
--- Bonus challenges score points but do not count toward the four category
--- minimums, so they are deliberately absent from the *_count columns.
+-- Score is the whole ranking now. There is no eligibility gate, so a team is
+-- free to earn points whichever way they like, and the board says only what
+-- they scored and how many stops it took.
 --
 -- team_code is deliberately NOT selected here. The board is world-readable and
 -- the code is the only credential a team has — anyone holding it can submit
@@ -125,11 +156,7 @@ select
   t.id as team_id,
   t.team_name,
   coalesce(sum(c.points), 0)::int as score,
-  count(*) filter (where c.category = 'A')::int as a_count,
-  count(*) filter (where c.category = 'B')::int as b_count,
-  count(*) filter (where c.category = 'C')::int as c_count,
-  count(*) filter (where c.category = 'D')::int as d_count,
-  count(*) filter (where c.category = 'bonus')::int as bonus_count,
+  count(cl.challenge_id)::int as claim_count,
   max(cl.claimed_at) as last_claim_at
 from teams t
 left join claims cl on cl.team_id = t.id
@@ -150,6 +177,7 @@ alter table teams enable row level security;
 alter table challenges enable row level security;
 alter table claims enable row level security;
 alter table merch_line_items enable row level security;
+alter table pending_registrations enable row level security;
 
 drop policy if exists "challenges are public" on challenges;
 create policy "challenges are public" on challenges for select to anon, authenticated using (true);
@@ -157,8 +185,9 @@ create policy "challenges are public" on challenges for select to anon, authenti
 drop policy if exists "claims are public" on claims;
 create policy "claims are public" on claims for select to anon, authenticated using (true);
 
--- teams and merch_line_items get no policies at all: RLS on with zero policies
--- denies anon everything, which is what we want for names and emails.
+-- teams, pending_registrations and merch_line_items get no policies at all:
+-- RLS on with zero policies denies anon everything, which is what we want for
+-- names, emails and invite tokens.
 
 -- Supabase grants anon/authenticated table privileges by default, but say it
 -- explicitly so the policies above are not silently load-bearing on a project

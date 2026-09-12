@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
 import { normalizeTeamCode } from '@/lib/teamCode';
 import { downscaleToDataUrl } from '@/lib/photo';
-import { describeGaps, isEligible } from '@/lib/eligibility';
 
 const STORAGE_KEY = 'beltline.teamCode';
 const PAGE_TITLES = {
@@ -149,7 +148,8 @@ export default function Submit() {
           {team.team.teamName} &middot; {team.standing.score} pts
           <br />
           <span className="muted">
-            {isEligible(team.standing) ? 'Qualified for the main prize.' : describeGaps(team.standing)}
+            {team.standing.claim_count} challenge
+            {team.standing.claim_count === 1 ? '' : 's'} claimed so far.
           </span>
         </p>
       )}

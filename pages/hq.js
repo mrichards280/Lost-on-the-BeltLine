@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react';
-import { isEligible } from '@/lib/eligibility';
 import { formatUsd } from '@/lib/pricing';
 
 const PASSCODE_KEY = 'beltline.hqPasscode';
@@ -15,6 +14,7 @@ const PASSCODE_KEY = 'beltline.hqPasscode';
 export default function HQ() {
   const [teams, setTeams] = useState(null);
   const [payments, setPayments] = useState(null);
+  const [openInvites, setOpenInvites] = useState([]);
   const [error, setError] = useState(null);
   const [passcode, setPasscode] = useState('');
   const [busyCode, setBusyCode] = useState(null);
@@ -31,6 +31,7 @@ export default function HQ() {
       const data = await response.json();
       setTeams(data.teams);
       setPayments(data.payments);
+      setOpenInvites(data.openInvites ?? []);
     } catch (err) {
       setError(err.message);
     }
@@ -108,6 +109,44 @@ export default function HQ() {
         )}
       </div>
 
+      {openInvites.length > 0 && (
+        <div className="card">
+          <h2 style={{ marginTop: 0 }}>
+            Waiting on a teammate{' '}
+            <span className="pill">{openInvites.length}</span>
+          </h2>
+          <p className="muted" style={{ marginTop: 0 }}>
+            These people signed up and invited someone who hasn&rsquo;t finished yet. There is no
+            team and nothing owed until they do &mdash; worth a nudge.
+          </p>
+          <table>
+            <thead>
+              <tr>
+                <th>Team</th>
+                <th>Started by</th>
+                <th>Waiting on</th>
+                <th className="num">Sent</th>
+              </tr>
+            </thead>
+            <tbody>
+              {openInvites.map((invite) => (
+                <tr key={invite.member_2_email}>
+                  <td>{invite.team_name}</td>
+                  <td className="muted">{invite.member_1_name}</td>
+                  <td className="muted">{invite.member_2_email}</td>
+                  <td className="num muted">
+                    {new Date(invite.created_at).toLocaleDateString(undefined, {
+                      month: 'short',
+                      day: 'numeric',
+                    })}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
       {teams.map((team) => {
         const counts = countByCategory(team.claims);
         const paid = team.paymentStatus === 'paid';
@@ -125,7 +164,12 @@ export default function HQ() {
               {team.merch.length > 0 && (
                 <>
                   {' '}&middot; merch:{' '}
-                  {team.merch.map((m) => (m.size ? `${m.item} (${m.size})` : m.item)).join(', ')}
+                  {team.merch
+                    .map((m) => {
+                      const what = m.size ? `${m.item} (${m.size})` : m.item;
+                      return m.person_name ? `${what} for ${m.person_name}` : what;
+                    })
+                    .join(', ')}
                 </>
               )}
               {paid && team.paidAt && (
@@ -152,16 +196,8 @@ export default function HQ() {
             <p>
               <strong>{team.score} pts</strong> &middot; {team.claims.length} claims &middot;{' '}
               A{counts.A} B{counts.B} C{counts.C} D{counts.D}
-              {counts.bonus > 0 && ` bonus${counts.bonus}`}{' '}
-              {isEligible({
-                a_count: counts.A,
-                b_count: counts.B,
-                c_count: counts.C,
-                d_count: counts.D,
-              }) ? (
-                <span className="pill A">qualified</span>
-              ) : (
-                <span className="pill">not qualified</span>
+              {counts.bonus > 0 && (
+                <> &middot; <span className="pill bonus">{counts.bonus} bonus</span></>
               )}
             </p>
 

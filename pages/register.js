@@ -2,36 +2,40 @@ import { useState } from 'react';
 import Link from 'next/link';
 import {
   ENTRY_PRICE_CENTS,
-  HAT_PRICE_CENTS,
-  SHIRT_PRICE_CENTS,
-  SHIRT_SIZES,
+  PER_PERSON_CENTS,
   formatUsd,
   priceRegistration,
 } from '@/lib/pricing';
-import { venmoNote, venmoPaymentUrl } from '@/lib/venmo';
+import PayPanel from '@/components/PayPanel';
+import MerchPicker from '@/components/MerchPicker';
+import CostNote from '@/components/CostNote';
 
-const VENMO_HANDLE = process.env.NEXT_PUBLIC_VENMO_HANDLE;
+const EMPTY_MERCH = { shirt: false, shirtSize: 'M', hat: false };
 
 export default function Register() {
+  // 'together' — both of you are here. 'invite' — sign yourself up and send
+  // the rest to your teammate.
+  const [mode, setMode] = useState('together');
   const [form, setForm] = useState({
     teamName: '',
     member1: '',
     member2: '',
     email: '',
-    shirt: false,
-    shirtSize: 'M',
-    hat: false,
+    member2Email: '',
   });
+  const [merch, setMerch] = useState(EMPTY_MERCH);
+  const [partnerMerch, setPartnerMerch] = useState(EMPTY_MERCH);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
-  const [registered, setRegistered] = useState(null);
+  const [result, setResult] = useState(null);
 
-  const merch = { shirt: form.shirt, shirtSize: form.shirt ? form.shirtSize : null, hat: form.hat };
-  const { totalCents } = priceRegistration(merch);
+  const people =
+    mode === 'invite'
+      ? [{ name: form.member1, merch }]
+      : [{ name: form.member1, merch }, { name: form.member2, merch: partnerMerch }];
+  const { totalCents } = priceRegistration(people);
 
-  function update(field, value) {
-    setForm((prev) => ({ ...prev, [field]: value }));
-  }
+  const update = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -43,17 +47,20 @@ export default function Register() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          mode,
           teamName: form.teamName,
           member1: form.member1,
-          member2: form.member2,
+          member2: mode === 'together' ? form.member2 : undefined,
           email: form.email,
+          member2Email: form.member2Email || undefined,
           merch,
+          partnerMerch: mode === 'together' ? partnerMerch : undefined,
         }),
       });
 
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Could not register your team');
-      setRegistered(data);
+      setResult(data);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -61,18 +68,45 @@ export default function Register() {
     }
   }
 
-  if (registered) return <PayNow registration={registered} />;
+  if (result?.status === 'invited') return <InviteSent result={result} />;
+  if (result) return <PayPanel registration={result} />;
 
   return (
     <main className="wrap">
       <p className="eyebrow">Registration</p>
       <h1>Register your team</h1>
       <p className="lede">
-        Two people per team. {formatUsd(ENTRY_PRICE_CENTS)} covers both of you &mdash;
-        you&rsquo;ll Venmo it on the next screen.
+        Two people per team. {formatUsd(PER_PERSON_CENTS)} each &mdash;{' '}
+        {formatUsd(ENTRY_PRICE_CENTS)} for the team, paid by Venmo once you&rsquo;re both in.
       </p>
 
       {error && <div className="notice bad">{error}</div>}
+
+      <div className="card">
+        <div className="segmented" role="group" aria-label="Who's signing up">
+          <button
+            type="button"
+            className={mode === 'together' ? 'on' : ''}
+            aria-pressed={mode === 'together'}
+            onClick={() => setMode('together')}
+          >
+            We&rsquo;re both here
+          </button>
+          <button
+            type="button"
+            className={mode === 'invite' ? 'on' : ''}
+            aria-pressed={mode === 'invite'}
+            onClick={() => setMode('invite')}
+          >
+            Just me for now
+          </button>
+        </div>
+        <p className="muted" style={{ margin: '12px 0 0' }}>
+          {mode === 'together'
+            ? 'Fill in both of you and you’re done.'
+            : 'We’ll email your teammate a link to add their half. Nothing is booked until they finish it.'}
+        </p>
+      </div>
 
       <form onSubmit={handleSubmit}>
         <div className="card">
@@ -89,7 +123,7 @@ export default function Register() {
             />
           </div>
           <div className="field">
-            <label htmlFor="member1">Member 1</label>
+            <label htmlFor="member1">{mode === 'invite' ? 'Your name' : 'Member 1'}</label>
             <input
               id="member1"
               type="text"
@@ -98,27 +132,51 @@ export default function Register() {
               onChange={(e) => update('member1', e.target.value)}
             />
           </div>
+
+          {/* Both names sit together, then both emails. Splitting the pair with
+              an email field made "Member 1" and "Member 2" read as unrelated. */}
+          {mode === 'together' && (
+            <div className="field">
+              <label htmlFor="member2">Member 2</label>
+              <input
+                id="member2"
+                type="text"
+                required
+                value={form.member2}
+                onChange={(e) => update('member2', e.target.value)}
+              />
+            </div>
+          )}
+
           <div className="field">
-            <label htmlFor="member2">Member 2</label>
-            <input
-              id="member2"
-              type="text"
-              required
-              value={form.member2}
-              onChange={(e) => update('member2', e.target.value)}
-            />
-          </div>
-          <div className="field" style={{ marginBottom: 0 }}>
-            <label htmlFor="email">Email</label>
+            <label htmlFor="email">
+              {mode === 'invite' ? 'Your email' : 'Email for the team code'}
+            </label>
             <input
               id="email"
               type="email"
               required
+              autoComplete="email"
               value={form.email}
               onChange={(e) => update('email', e.target.value)}
             />
+          </div>
+
+          <div className="field" style={{ marginBottom: 0 }}>
+            <label htmlFor="member2Email">
+              {mode === 'invite' ? "Teammate's email" : 'Their email (optional)'}
+            </label>
+            <input
+              id="member2Email"
+              type="email"
+              required={mode === 'invite'}
+              value={form.member2Email}
+              onChange={(e) => update('member2Email', e.target.value)}
+            />
             <p className="muted" style={{ margin: '6px 0 0' }}>
-              Your team code goes here. One team per email address.
+              {mode === 'invite'
+                ? 'We’ll send them a link to add their name and pick their merch.'
+                : 'Add it and the team code goes to both of you.'}
             </p>
           </div>
         </div>
@@ -126,51 +184,45 @@ export default function Register() {
         <div className="card">
           <h2 style={{ marginTop: 0 }}>Merch (optional)</h2>
           <p className="muted" style={{ marginTop: 0 }}>
-            Pre-order only, handed out at check-in. Add it to your Venmo total.
+            Pre-order only, handed out at check-in.
           </p>
-          <div className="checkline">
-            <input
-              id="shirt"
-              type="checkbox"
-              checked={form.shirt}
-              onChange={(e) => update('shirt', e.target.checked)}
+          <MerchPicker
+            idPrefix="me"
+            value={merch}
+            onChange={setMerch}
+            heading={mode === 'together' ? form.member1 || 'Member 1' : null}
+          />
+          {mode === 'together' && (
+            <MerchPicker
+              idPrefix="partner"
+              value={partnerMerch}
+              onChange={setPartnerMerch}
+              heading={form.member2 || 'Member 2'}
             />
-            <label htmlFor="shirt">Shirt &mdash; {formatUsd(SHIRT_PRICE_CENTS)}</label>
-          </div>
-          {form.shirt && (
-            <div className="field" style={{ marginLeft: 30 }}>
-              <label htmlFor="shirtSize">Size</label>
-              <select
-                id="shirtSize"
-                value={form.shirtSize}
-                onChange={(e) => update('shirtSize', e.target.value)}
-              >
-                {SHIRT_SIZES.map((size) => (
-                  <option key={size} value={size}>
-                    {size}
-                  </option>
-                ))}
-              </select>
-            </div>
           )}
-          <div className="checkline">
-            <input
-              id="hat"
-              type="checkbox"
-              checked={form.hat}
-              onChange={(e) => update('hat', e.target.checked)}
-            />
-            <label htmlFor="hat">Hat &mdash; {formatUsd(HAT_PRICE_CENTS)}</label>
-          </div>
+          {mode === 'invite' && (
+            <p className="muted" style={{ marginBottom: 0 }}>
+              Your teammate picks their own when they finish signing up.
+            </p>
+          )}
         </div>
 
+        <CostNote />
+
         <div className="card">
-          <p style={{ display: 'flex', justifyContent: 'space-between', margin: '0 0 16px' }}>
-            <strong>You&rsquo;ll Venmo</strong>
+          <p style={{ display: 'flex', justifyContent: 'space-between', margin: '0 0 4px' }}>
+            <strong>{mode === 'invite' ? 'Team total so far' : "You'll Venmo"}</strong>
             <strong>{formatUsd(totalCents)}</strong>
           </p>
+          <p className="muted" style={{ margin: '0 0 16px' }}>
+            {mode === 'invite'
+              ? "Your teammate's merch gets added when they finish. You'll both get the total then."
+              : `Entry is ${formatUsd(PER_PERSON_CENTS)} each; pay it as one team payment.`}
+          </p>
           <button type="submit" disabled={submitting}>
-            {submitting ? 'Registering...' : 'Register and get my team code'}
+            {submitting
+              ? mode === 'invite' ? 'Sending...' : 'Registering...'
+              : mode === 'invite' ? 'Send it to my teammate' : 'Register and get my team code'}
           </button>
         </div>
       </form>
@@ -182,91 +234,31 @@ export default function Register() {
   );
 }
 
-function PayNow({ registration }) {
-  const { teamCode, teamName, amountDueCents, items, alreadyRegistered, paymentStatus } = registration;
-  const note = venmoNote(teamCode, teamName);
-  const venmoUrl = venmoPaymentUrl({ handle: VENMO_HANDLE, amountCents: amountDueCents, note });
-
+function InviteSent({ result }) {
   return (
     <main className="wrap">
-      <p className="eyebrow">{alreadyRegistered ? 'Already registered' : 'Registered'}</p>
-      <h1>{alreadyRegistered ? "You're already in." : "You're in."}</h1>
-
-      {alreadyRegistered && (
-        <div className="notice warn">
-          That email is already registered as <strong>{teamName}</strong>, so here&rsquo;s the
-          original team code rather than a new one.
-        </div>
-      )}
-
+      <p className="eyebrow">Sent</p>
+      <h1>Over to {result.teamName}&rsquo;s other half.</h1>
       <div className="card">
-        <p className="eyebrow" style={{ textAlign: 'center' }}>Your team code</p>
-        <div className="teamcode">{teamCode}</div>
+        <p style={{ marginTop: 0 }}>
+          We emailed <strong>{result.partnerEmail}</strong> a link to add their name and pick
+          their merch.
+        </p>
         <p style={{ marginBottom: 0 }}>
-          It&rsquo;s in your email too. On hunt day, scan any QR code in your passport and type
-          this in once &mdash; your phone remembers it after that.
+          <strong>Nothing is booked until they finish it.</strong> As soon as they do, you&rsquo;ll
+          both get the team code and the Venmo total.
         </p>
       </div>
-
-      {paymentStatus === 'paid' ? (
-        <div className="notice good">
-          <strong>Payment received.</strong> Nothing else to do &mdash; see you at the start line.
-        </div>
-      ) : (
-        <div className="card">
-          <h2 style={{ marginTop: 0 }}>Now Venmo {formatUsd(amountDueCents)}</h2>
-
-          <table style={{ marginBottom: 16 }}>
-            <tbody>
-              {items?.map((item) => (
-                <tr key={item.label}>
-                  <td>{item.label}</td>
-                  <td className="num">{formatUsd(item.cents)}</td>
-                </tr>
-              ))}
-              <tr>
-                <td><strong>Total</strong></td>
-                <td className="num"><strong>{formatUsd(amountDueCents)}</strong></td>
-              </tr>
-            </tbody>
-          </table>
-
-          {VENMO_HANDLE ? (
-            <>
-              <p style={{ marginTop: 0 }}>
-                Send to <strong>@{VENMO_HANDLE.replace(/^@/, '')}</strong> with this note so we
-                can match it to your team:
-              </p>
-              <div className="teamcode" style={{ fontSize: 15, letterSpacing: 0, padding: 14 }}>
-                {note}
-              </div>
-              {venmoUrl && (
-                <p style={{ marginTop: 16, marginBottom: 8 }}>
-                  <a href={venmoUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
-                    <button type="button">Open Venmo</button>
-                  </a>
-                </p>
-              )}
-              <p className="muted" style={{ marginBottom: 0 }}>
-                If that button doesn&rsquo;t fill anything in, just pay
-                {' '}@{VENMO_HANDLE.replace(/^@/, '')} manually &mdash; the amount and note above
-                are all we need. Your spot is held either way; we settle up at check-in.
-              </p>
-            </>
-          ) : (
-            <div className="notice warn" style={{ marginBottom: 0 }}>
-              The Venmo handle hasn&rsquo;t been configured on this site yet
-              (<code>NEXT_PUBLIC_VENMO_HANDLE</code>). Your team is registered &mdash; ask the
-              organizer where to send {formatUsd(amountDueCents)}.
-            </div>
-          )}
+      {result.resent && (
+        <div className="notice warn">
+          You&rsquo;d already started this one, so we resent the same link rather than making a
+          second team.
         </div>
       )}
-
+      <CostNote />
       <p className="muted">
-        <Link href="/leaderboard">Leaderboard</Link>
-        {' · '}
-        <Link href="/">Front page</Link>
+        Nothing arrived? Check their spam, or{' '}
+        <Link href="/register">start again</Link>.
       </p>
     </main>
   );

@@ -35,7 +35,7 @@ export default async function handler(req, res) {
       teamName: team.team_name,
       members: [team.member_1_name, team.member_2_name],
     },
-    standing: standing ?? { score: 0, a_count: 0, b_count: 0, c_count: 0, d_count: 0 },
+    standing: standing ?? { score: 0, claim_count: 0 },
     claims: (claims ?? []).map((row) => ({
       challengeId: row.challenge_id,
       claimedAt: row.claimed_at,

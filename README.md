@@ -37,7 +37,8 @@ npm run test:capacity   # concurrency test — needs DATABASE_URL
 | Path | What it is |
 | --- | --- |
 | `/` | Front page |
-| `/register` | Team form → team code + Venmo instructions |
+| `/register` | Team form → team code + Venmo instructions. Both people, or one plus an invite |
+| `/join?token=…` | Where an invited teammate adds their half and the team is created |
 | `/submit?page=ab\|cd\|bonus` | **The QR landing page.** Challenge picker + photo |
 | `/leaderboard` | Live standings over Supabase Realtime |
 | `/hq` | Staff view: settle Venmo payments, match stickers. Unlinked — see below |
@@ -91,38 +92,78 @@ phones.
 
 ---
 
-## Payment: how Venmo changes the shape of this
+## Registering and paying
 
-With a payment processor, the webhook is what creates a team — money landing is
-the signal, and the system can trust it. Venmo gives you no such signal, so
-registration and payment are two separate events:
+**Price is $25 a head, charged as one $50 team payment.** `lib/pricing.js` holds
+both numbers and derives the per-person figure from the team price, so they
+cannot drift apart. Merch is per person — each half of a team picks their own,
+and a shirt carries its wearer's name into the packing list at `/hq`.
 
-1. A team registers. The team record is created **immediately** as `unpaid`, and
-   they get their team code on screen and by email right away.
-2. The confirmation page shows the exact amount and a Venmo note that leads with
-   the team code (`BELT-07 - The Krog Street Krew - Lost on the BeltLine`), so
-   payments are matchable from your Venmo feed without asking anyone.
-3. At check-in you open `/hq`, find the team, and hit **Mark received**. HQ shows
-   a running total of collected vs. outstanding.
+### Two ways in
 
-Consequences worth knowing up front:
+**Both people present** — the usual form. The team is created immediately.
+
+**One person, then an invite** — someone signs themselves up and enters their
+teammate's email. That creates a row in `pending_registrations` and **nothing
+else**: no team, no team code, no amount owed. The teammate gets an emailed link
+to `/join?token=…`, adds their name and picks their own merch, and *that* is
+when the team comes into existence. Both people then get the code.
+
+A few consequences worth knowing:
+
+- **A half-finished sign-up never becomes a team.** If the teammate never
+  follows through, there is no team holding a code and no phantom debt. `/hq`
+  lists these under "Waiting on a teammate" so you can chase them.
+- **The invite link is a capability URL** — whoever holds it can complete that
+  registration. That is deliberate; the teammate has no account to sign into.
+  The token is 32 bytes of CSPRNG output, not a UUID or anything guessable.
+- **One open invite per person**, enforced by a partial unique index. Submitting
+  twice resends the same link rather than forking the registration. Completing
+  one frees you to start another, so a flaked-on teammate isn't a dead end.
+- **A failed invite email is reported, not swallowed.** Unlike the team code
+  email — where the code is already on screen — the invite *is* the
+  registration, so if it can't send, the page says so and hands you the link.
+
+### Paying
+
+Venmo gives no confirmation signal, so registration and payment are two separate
+events. A team is created `unpaid`, the confirmation screen shows the amount and
+a Venmo note leading with the team code (`BELT-07 - The Krog Street Krew - …`) so
+payments are matchable from your feed, and you mark it received at `/hq`.
 
 - **A team code is issued before payment.** Nothing blocks an unpaid team from
-  claiming challenges — for a 15-person friends event, being locked out because
-  the organizer hasn't checked Venmo yet is worse than the alternative. `/hq`
-  flags unpaid teams so check-in catches it.
-- **`amount_due_cents` is frozen at registration.** Change shirt prices later and
-  it never rewrites what someone was actually asked to pay.
-- **One team per email address**, enforced by a unique index. Without a payment
-  step there is nothing to slow down a double-tapped submit, and every duplicate
-  burns one of only 90 team codes. A repeat registration returns the original
-  code instead of erroring.
-- **Your event plan budgets ~$26 in Stripe fees. That line is now $0**, which
-  moves the projected net from roughly +$384–464 to **+$410–490**.
+  claiming — being locked out because the organizer hasn't checked Venmo yet is
+  worse. `/hq` flags unpaid teams so check-in catches it.
+- **`amount_due_cents` is frozen at registration**, so a later price change never
+  rewrites what someone was actually asked to pay.
+- **One team per email address.** Without a payment step nothing slows down a
+  double-tapped submit, and every duplicate burns one of only 90 team codes. A
+  repeat registration returns the original code instead of erroring.
+- **Your event plan budgets ~$26 in Stripe fees. That line is now $0**, moving
+  the projected net from roughly +$384–464 to **+$410–490**.
 
-Prices live in `lib/pricing.js` — entry $50, shirt $22, hat $25. The form, the
-stored amount, the Venmo link, the email and the HQ list all read from there, so
-they cannot drift apart.
+### Saying what the fee doesn't cover
+
+Entry buys the hunt. The coffee, the flight, the cookie a team decorates — those
+come out of their own pocket, and your plan puts realistic hunt spend at **$25–40
+a head**. Discovering that one stop at a time is how a $50 event starts feeling
+like a $120 one, so it is stated on the front page, on the registration form, on
+the join page, in the invite email and in the team code email. One component
+(`components/CostNote.jsx`) and one constant pair, so the number can't drift.
+
+---
+
+## Scoring
+
+**Highest score wins. There is no eligibility gate** — a team can chase Golden
+Tickets, grind the easy stops, or anything in between, and it all counts the
+same. The two-per-category rule from the event plan is deliberately not
+implemented.
+
+If you ever want it back, it was: at least two claims in each of A, B, C and D
+before a team's score counts toward the overall prize, with the gap surfaced
+live ("you need 1 more Type C"). It would need per-category counts back in the
+`leaderboard` view plus a check wherever standings are shown.
 
 ---
 
@@ -221,6 +262,9 @@ with an allowlist, or a Netlify password on the route.
    database. Do not run the event without this passing.
 7. **Confirm the HQ passcode works** before hunt day — open `/hq`, mark a test
    team paid, then mark it unpaid again.
+8. **Send yourself an invite** — register with "just me for now", open the
+   emailed link, and finish it. This is the one flow that spans two people, two
+   emails and two devices, so it is worth walking end to end once.
 
 ### Notes for hunt day
 
@@ -228,9 +272,10 @@ with an allowlist, or a Netlify password on the route.
   and the outstanding total at the top is your "who still owes me" list.
 - The passcode is remembered per device after the first successful update, so
   you type it once.
-- `RESEND_API_KEY` is optional. Without it, registration still succeeds and the
-  team code is written to the function logs; codes are always readable from
-  `/hq`. Don't let a missing email key block a registration.
+- `RESEND_API_KEY` is optional **only for the team code**, which is written to
+  the function logs and always readable from `/hq`. It is **required for the
+  invite flow** — without it, "just me for now" can't reach anyone, and the
+  registration route says so rather than failing silently.
 - The team code is stored in `localStorage`, so a team switching phones mid-hunt
   just types it in again.
 - Proof photos are downscaled to ~1600px in the browser before upload. Hunt day

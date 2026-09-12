@@ -345,6 +345,50 @@ button.link {
 }
 button.link:hover { transform: none; }
 
+/* ---------- segmented control ---------- */
+/* Two mutually exclusive routes into registration. A pair of radios reads as
+   optional extras; this reads as "pick your path". */
+
+.segmented {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  background: var(--glass-strong);
+  border: 1px solid var(--glass-edge);
+  border-radius: 999px;
+}
+.segmented button {
+  width: 100%;
+  padding: 11px 14px;
+  font-size: 14.5px;
+  font-weight: 600;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ink-soft);
+}
+.segmented button:hover:not(.on) { transform: none; filter: none; color: var(--ink); }
+.segmented button.on {
+  background: var(--pop);
+  color: var(--pop-ink);
+  box-shadow: 0 6px 16px -8px var(--pop);
+}
+
+/* Per-person merch headings inside one card. */
+.merch-heading {
+  font-family: var(--font-data);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin: 20px 0 10px;
+  padding-top: 16px;
+  border-top: 1px dashed var(--line);
+}
+.merch-heading:first-of-type { margin-top: 0; padding-top: 0; border-top: none; }
+
 /* ---------- chips ---------- */
 
 .pill {
@@ -489,11 +533,6 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 td.num { font-family: var(--font-data); }
 tbody tr:last-child td { border-bottom: none; }
 
-.row-eligible td:first-child {
-  border-left: 3px solid var(--good);
-  padding-left: 9px;
-  border-radius: 2px 0 0 2px;
-}
 
 /* ---------- misc ---------- */
 
